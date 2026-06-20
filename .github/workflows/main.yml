@@ -18,32 +18,27 @@ jobs:
         cp -R iOS-Imgui-ModMenu-main/* . || true
         cp -R iOS-ImGui-ModMenu-d-main/* . || true
 
-    - name: Ultimate Code &豪 Fix
+    - name: Clear Build Flags and Fix Code
       run: |
-        # Makefile එක සකස් කිරීම සහ Warnings/Errors Skip කිරීම
         if [ -f Makefile ]; then
           sed -i '' 's/Mods.mm//g' Makefile
           echo "ADDITIONAL_CFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function" >> Makefile
           echo "ADDITIONAL_OBJCFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function" >> Makefile
         fi
-        
-        # Unity.h Syntax Error එක මඟහැරවීම
         if [ -f Includes/Unity/Unity.h ]; then
           sed -i '' 's/->template toCPPList/->toCPPList/g' Includes/Unity/Unity.h
         fi
 
     - name: Set up Manual Theos Environment
       run: |
-        # ලෙඩ දෙන Installer එක වෙනුවට අතින්ම Theos Setup කිරීම
         brew install ldid xz
         git clone --recursive https://github.com/theos/theos.git ~/theos
         echo "THEOS=~/theos" >> $GITHUB_ENV
 
-    - name: Manual SDK Patch (Fix GitHub API Failure)
+    - name: Manual SDK Patch
       run: |
-        # API එකට කතා නොකර කෙලින්ම SDK එක බාගත කිරීම
         mkdir -p ~/theos/sdks
-        curl -L https://github.com/theos/sdks/raw/master/iPhoneOS16.5.sdk.tar.xz -o ~/theos/sdks/iPhoneOS16.5.sdk.tar.xz
+        curl -L "https://github.com/theos/sdks/blob/master/iPhoneOS16.5.sdk.tar.xz?raw=true" -o ~/theos/sdks/iPhoneOS16.5.sdk.tar.xz
         tar -xf ~/theos/sdks/iPhoneOS16.5.sdk.tar.xz -C ~/theos/sdks/
         rm ~/theos/sdks/iPhoneOS16.5.sdk.tar.xz
 
