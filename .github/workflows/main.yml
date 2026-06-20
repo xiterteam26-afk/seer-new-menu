@@ -1,0 +1,49 @@
+name: Build iOS Menu UI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Unzip Project Files
+      run: |
+        unzip ImGui.zip -d .
+        cp -R ImGui/* . || true
+        cp -R iOS-Imgui-ModMenu-main/* . || true
+        cp -R iOS-ImGui-ModMenu-d-main/* . || true
+
+    - name: Ultimate Code &豪 Fix
+      run: |
+        # Makefile එක පිරිසිදු කරලා අවශ්‍ය Compiler Flags දානවා
+        if [ -f Makefile ]; then
+          sed -i '' 's/Mods.mm//g' Makefile
+          echo "ADDITIONAL_CFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function" >> Makefile
+          echo "ADDITIONAL_OBJCFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function" >> Makefile
+        fi
+        
+        # Unity.h එකේ තියෙන Template Syntax Error එක මඟහරවනවා
+        if [ -f Includes/Unity/Unity.h ]; then
+          sed -i '' 's/->template toCPPList/->toCPPList/g' Includes/Unity/Unity.h
+        fi
+
+    - name: Set up Theos Environment
+      run: |
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+        echo "THEOS=~/theos" >> $GITHUB_ENV
+
+    - name: Compile Project
+      run: |
+        export THEOS=~/theos
+        make package FINALPACKAGE=1 GO_EASY=1
+
+    - name: Upload .dylib Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: iOS-Menu-Dylib
+        path: .theos/obj/*.dylib
