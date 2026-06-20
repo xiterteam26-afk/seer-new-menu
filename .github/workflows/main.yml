@@ -18,10 +18,11 @@ jobs:
         cp -R iOS-Imgui-ModMenu-main/* . || true
         cp -R iOS-ImGui-ModMenu-d-main/* . || true
 
-    - name: Clear Build Flags and Fix Code
+    - name: Dynamic Makefile & Code Fix
       run: |
-        # Makefile එකට අවශ්‍ය flags එකතු කිරීම (Mods.mm අයින් කරන්නේ නැත)
+        # Makefile එක ඇතුලේ තියෙන නිශ්චිත ෆයිල් නාමයන් අයින් කර සියලුම ෆයිල්ස් ඔටෝ එකතු කර ගැනීම
         if [ -f Makefile ]; then
+          sed -i '' 's/iOSImGui_FILES.*/iOSImGui_FILES = $(wildcard *.mm) $(wildcard *.cpp) $(wildcard ImGui\/*.mm) $(wildcard ImGui\/*.cpp) $(wildcard Includes\/*\/*.mm) $(wildcard Includes\/*\/*.m)/g' Makefile
           echo "ADDITIONAL_CFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function -Wno-return-type" >> Makefile
           echo "ADDITIONAL_OBJCFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function -Wno-return-type" >> Makefile
         fi
