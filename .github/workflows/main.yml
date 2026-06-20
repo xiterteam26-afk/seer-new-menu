@@ -18,22 +18,34 @@ jobs:
         cp -R iOS-Imgui-ModMenu-main/* . || true
         cp -R iOS-ImGui-ModMenu-d-main/* . || true
 
-    - name: Smart Code Patch
+    - name: Smart Code & Directory Patch
       run: |
-        # Create a dummy Mods.mm to satisfy the Makefile without using sed
+        # Create a dummy Mods.mm to satisfy the Makefile
         touch Mods.mm
         echo "void LoadMods() {}" >> Mods.mm
         echo "int _mods = 0;" >> Mods.mm
 
-        # Inject compiler flags into Makefile to bypass all strict template errors
+        # Inject absolute include paths and ultimate bypass flags into Makefile
         if [ -f Makefile ]; then
-          echo "ADDITIONAL_CFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function -Wno-return-type -Wno-error" >> Makefile
-          echo "ADDITIONAL_OBJCFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function -Wno-return-type -Wno-error" >> Makefile
+          # Fix ImGui include path missing error
+          echo "ADDITIONAL_CFLAGS = -I. -I./ImGui -I./Includes -Wno-error -Wno-everything" >> Makefile
+          echo "ADDITIONAL_OBJCFLAGS = -I. -I./ImGui -I./Includes -Wno-error -Wno-everything" >> Makefile
+          echo "ADDITIONAL_CCFLAGS = -I. -I./ImGui -I./Includes -Wno-error -Wno-everything" >> Makefile
         fi
-        
-        # Bypass strict errors inside Unity.h manually
+        
+        # Bypass strict C++ template errors inside Unity.h
         if [ -f Includes/Unity/Unity.h ]; then
           sed -i '' 's/->template toCPPList/->toCPPList/g' Includes/Unity/Unity.h
+        fi
+
+        # Fix extern "C" stdint.h module import error inside Dobby header
+        if [ -f Includes/Hooks/dobby_defines.h ]; then
+          sed -i '' 's/#include <stdint.h>//g' Includes/Hooks/dobby_defines.h
+          sed -i '' '1s/^/#include <stdint.h>\n/' Includes/Hooks/dobby_defines.h
+        fi
+        if [ -f Includes/Hooking/../Libs/dobby_defines.h ]; then
+          sed -i '' 's/#include <stdint.h>//g' Includes/Hooking/../Libs/dobby_defines.h
+          sed -i '' '1s/^/#include <stdint.h>\n/' Includes/Hooking/../Libs/dobby_defines.h
         fi
 
     - name: Set up Manual Theos Environment
