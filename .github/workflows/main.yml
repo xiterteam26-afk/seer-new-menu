@@ -20,11 +20,13 @@ jobs:
 
     - name: Clear Build Flags and Fix Code
       run: |
+        # Makefile එකට අවශ්‍ය flags එකතු කිරීම (Mods.mm අයින් කරන්නේ නැත)
         if [ -f Makefile ]; then
-          sed -i '' 's/Mods.mm//g' Makefile
-          echo "ADDITIONAL_CFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function" >> Makefile
-          echo "ADDITIONAL_OBJCFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function" >> Makefile
+          echo "ADDITIONAL_CFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function -Wno-return-type" >> Makefile
+          echo "ADDITIONAL_OBJCFLAGS = -Wno-error=missing-template-arg-list-after-template-kw -Wno-error=module-import-in-extern-c -Wno-implicit-function-declaration -Wno-unused-variable -Wno-unused-function -Wno-return-type" >> Makefile
         fi
+        
+        # Unity.h Syntax Error එක මඟහැරවීම
         if [ -f Includes/Unity/Unity.h ]; then
           sed -i '' 's/->template toCPPList/->toCPPList/g' Includes/Unity/Unity.h
         fi
@@ -37,11 +39,9 @@ jobs:
 
     - name: Link Built-in iOS SDK
       run: |
-        # සර්වර් එකේ දැනටමත් තියෙන නිල Apple iOS SDK එක කෙලින්ම සම්බන්ධ කිරීම
         mkdir -p ~/theos/sdks
         SYS_SDK=$(xcrun --sdk iphoneos --show-sdk-path)
         ln -s "$SYS_SDK" ~/theos/sdks/iPhoneOS.sdk
-        echo "Using System SDK path: $SYS_SDK"
 
     - name: Compile Project
       run: |
