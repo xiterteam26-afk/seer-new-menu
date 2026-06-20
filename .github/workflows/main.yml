@@ -18,35 +18,32 @@ jobs:
         cp -R iOS-Imgui-ModMenu-main/* . || true
         cp -R iOS-ImGui-ModMenu-d-main/* . || true
 
-    - name: Smart Code & Directory Patch
+    - name: Ultimate Code and Compiler Patch
       run: |
-        # Create a dummy Mods.mm to satisfy the Makefile
-        touch Mods.mm
-        echo "void LoadMods() {}" >> Mods.mm
-        echo "int _mods = 0;" >> Mods.mm
+        # 1. Create a real empty Mods.mm file to fix "File does not exist" and linker errors
+        if [ ! -f Mods.mm ]; then
+          touch Mods.mm
+          echo "void LoadMods() {}" >> Mods.mm
+          echo "int _mods = 0;" >> Mods.mm
+        fi
 
-        # Inject absolute include paths and ultimate bypass flags into Makefile
+        # 2. Force append absolute include paths and silence ALL compiler warnings/errors
         if [ -f Makefile ]; then
-          # Fix ImGui include path missing error
           echo "ADDITIONAL_CFLAGS = -I. -I./ImGui -I./Includes -Wno-error -Wno-everything" >> Makefile
           echo "ADDITIONAL_OBJCFLAGS = -I. -I./ImGui -I./Includes -Wno-error -Wno-everything" >> Makefile
           echo "ADDITIONAL_CCFLAGS = -I. -I./ImGui -I./Includes -Wno-error -Wno-everything" >> Makefile
         fi
         
-        # Bypass strict C++ template errors inside Unity.h
+        # 3. Fix the template syntax layout issue inside Unity.h
         if [ -f Includes/Unity/Unity.h ]; then
           sed -i '' 's/->template toCPPList/->toCPPList/g' Includes/Unity/Unity.h
         fi
 
-        # Fix extern "C" stdint.h module import error inside Dobby header
-        if [ -f Includes/Hooks/dobby_defines.h ]; then
-          sed -i '' 's/#include <stdint.h>//g' Includes/Hooks/dobby_defines.h
-          sed -i '' '1s/^/#include <stdint.h>\n/' Includes/Hooks/dobby_defines.h
-        fi
-        if [ -f Includes/Hooking/../Libs/dobby_defines.h ]; then
-          sed -i '' 's/#include <stdint.h>//g' Includes/Hooking/../Libs/dobby_defines.h
-          sed -i '' '1s/^/#include <stdint.h>\n/' Includes/Hooking/../Libs/dobby_defines.h
-        fi
+        # 4. Fix C++ module import leak inside extern "C" blocks (Dobby Engine headers)
+        find . -name "dobby_defines.h" -type f | while read -r file; do
+          sed -i '' 's/#include <stdint.h>//g' "$file"
+          sed -i '' '1s/^/#include <stdint.h>\n/' "$file"
+        done
 
     - name: Set up Manual Theos Environment
       run: |
