@@ -35,12 +35,13 @@ jobs:
         git clone --recursive https://github.com/theos/theos.git ~/theos
         echo "THEOS=~/theos" >> $GITHUB_ENV
 
-    - name: Manual SDK Patch
+    - name: Link Built-in iOS SDK
       run: |
+        # සර්වර් එකේ දැනටමත් තියෙන නිල Apple iOS SDK එක කෙලින්ම සම්බන්ධ කිරීම
         mkdir -p ~/theos/sdks
-        curl -L "https://github.com/theos/sdks/blob/master/iPhoneOS16.5.sdk.tar.xz?raw=true" -o ~/theos/sdks/iPhoneOS16.5.sdk.tar.xz
-        tar -xf ~/theos/sdks/iPhoneOS16.5.sdk.tar.xz -C ~/theos/sdks/
-        rm ~/theos/sdks/iPhoneOS16.5.sdk.tar.xz
+        SYS_SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+        ln -s "$SYS_SDK" ~/theos/sdks/iPhoneOS.sdk
+        echo "Using System SDK path: $SYS_SDK"
 
     - name: Compile Project
       run: |
